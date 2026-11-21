@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10191c">
+<title>RoomGroove · La mia stanza</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<style>
+:root{color-scheme:dark;--bg:#10191c;--panel:#1b292d;--line:#37474a;--ink:#f7f6ee;--muted:#c0ceca;--accent:#b5e9cc;--amber:#faba74;--aqua:#73dfcc;--lilac:#dab1ff;--focus:#f6d88f}
+*{box-sizing:border-box}
+html{background:var(--bg);color:var(--ink);font:18px/1.4 "Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif;scrollbar-color:var(--line) var(--bg)}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% 0%,#243237 0,transparent 55%),var(--bg)}
+::selection{color:var(--bg);background:var(--accent)}
+button,input,select{font:inherit} select{width:100%;margin-top:6px;background:#253539;padding:10px;color:var(--ink);border:1px solid var(--line);border-radius:9px;min-height:48px} select:focus-visible{outline:3px solid var(--focus)}
+button{touch-action:manipulation;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+button:disabled{opacity:.46;cursor:not-allowed}
+button:hover:not(:disabled){filter:brightness(1.12)}
+button:active:not(:disabled){filter:brightness(.91)}
+[hidden]{display:none!important}
+.shell{width:min(100%,1536px);margin:auto;padding:28px 4.4vw 24px}
+header,.title-row,.row,.map-footer,.panel-heading,.status-line{display:flex;align-items:center;justify-content:space-between;gap:12px}
+header{margin-bottom:25px}
+.brand,.brand-mark,.with-icon,.info,.controls-title,.metric{display:inline-flex;align-items:center;gap:9px}
+.brand{font-size:1.27rem;font-weight:680;letter-spacing:-.035em}
+.brand-mark{height:32px;width:33px;gap:3px;justify-content:center;color:var(--accent)}
+.brand-mark i{width:4px;border-radius:3px;background:currentColor}
+.brand-mark i:nth-child(1){height:12px}.brand-mark i:nth-child(2){height:24px}.brand-mark i:nth-child(3){height:32px}.brand-mark i:nth-child(4){height:18px}.brand-mark i:nth-child(5){height:9px}
+time{font-size:1.25rem;font-weight:550;font-variant-numeric:tabular-nums;color:var(--muted)}
+h1,h2,p{margin:0}
+h1{font-size:2.75rem;font-weight:590;line-height:1.04;letter-spacing:-.04em}
+h2{font-size:1.42rem;line-height:1.18;font-weight:610;letter-spacing:-.025em}
+.title-row{align-items:flex-end;margin-bottom:20px}
+.subtitle{font-size:.99rem;color:var(--muted);margin-top:8px}
+svg.icon{width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button.control{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:12px;border:1px solid var(--line);background:#253539;padding:11px 18px;min-height:54px;font-weight:600;font-size:1rem;line-height:1.15}
+button.control.primary{border-color:transparent;background:var(--accent);color:#142e24}
+button.control.secondary{background:transparent}
+.layout{display:grid;grid-template-columns:minmax(0,1.88fr) minmax(275px,1fr);gap:18px;align-items:stretch}
+.map-frame{display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#142023}
+.map{flex:1;position:relative;isolation:isolate;min-height:315px;overflow:hidden;background:radial-gradient(ellipse at 52% 50%,#2d3b3a,transparent 80%),#162325}
+.floor{display:block;position:absolute;inset:7% 5%;width:90%;height:86%;pointer-events:none}
+.spot-layer{position:absolute;inset:0}
+.map.editing{cursor:crosshair}
+.light{--lamp:var(--amber);--strength:.55;position:absolute;z-index:1;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;width:68px;height:68px;padding:0;border:none;border-radius:100%;color:var(--lamp);background:transparent;-webkit-tap-highlight-color:transparent}
+.light::before{content:"";position:absolute;pointer-events:none;width:140px;height:140px;background:radial-gradient(circle,currentColor 0,transparent 67%);opacity:calc(var(--strength) * .45)}
+.light .lamp-disc{display:grid;place-items:center;position:relative;width:42px;height:42px;border-radius:50%;background:#223037;border:2px solid var(--lamp)}
+.lamp-disc svg.icon{width:23px;height:23px}
+.light .light-name{position:absolute;top:calc(50% + 24px);left:50%;transform:translateX(-50%);white-space:nowrap;background:#162124;color:#f6f7f1;padding:3px 9px 4px;border-radius:6px;font-size:.82rem;line-height:1.15;font-weight:610;letter-spacing:0}
+.light.active{z-index:3}.light.active .lamp-disc{outline:2px solid #fff;outline-offset:3px}
+.light.active .light-name{background:#eff4e9;color:#172624}
+.map.editing .light{touch-action:none;cursor:grab}.map.editing .light:active{cursor:grabbing}
+.map.running .light::before{animation:beat 1.5s ease-out infinite}
+.map.running .light:nth-child(2)::before{animation-delay:-.75s}.map.running .light:nth-child(3)::before{animation-duration:3s}
+@keyframes beat{0%{opacity:calc(var(--strength)*.9);transform:scale(1.3)}80%,100%{opacity:calc(var(--strength)*.15);transform:scale(.8)}}
+.map-footer{flex:none;min-height:56px;padding:10px 17px;border-top:1px solid #324347;justify-content:flex-start;color:var(--muted);font-size:.86rem}
+.map-footer svg{color:var(--accent)}
+.live-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;min-height:48px;padding:6px 14px;background:#1f3731;color:#d9f6e7;font-size:.93rem}.live-bar button.control{min-height:42px;padding:6px 10px}.map.listening .light::before{opacity:calc(var(--strength) * var(--pulse,0) * .9);transform:scale(calc(1 + var(--pulse,0)*.2))}
+.panel{min-width:0;padding:21px 22px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
+.controls-title{justify-content:space-between;width:100%;margin-bottom:7px}
+.controls-title>svg{color:var(--accent);width:1.46rem;height:1.46rem}
+.panel p{font-size:.93rem;line-height:1.34;color:var(--muted);margin:7px 0 12px}
+.group+.group{border-top:1px solid var(--line);margin-top:17px;padding-top:16px}
+.group button.control{width:100%;min-height:54px}
+.meter{display:flex;gap:4px;height:10px;margin-top:13px}
+.meter i{flex:1;border-radius:2px;background:#4a5859}
+.meter i.on{background:var(--accent)}
+.mic-message:not(:empty),.feedback:not(:empty){margin-top:10px;font-size:.84rem;color:#f4dfa5}
+.pane-title{display:flex;gap:10px;align-items:center}
+.swatch{flex:none;width:13px;height:13px;background:var(--accent);border-radius:50%}
+.detail-action{margin:14px 0}
+.range-label{display:flex;justify-content:space-between;gap:8px;margin-top:15px;font-weight:600}
+.range-label output{font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=range]{width:100%;height:50px;accent-color:var(--accent);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}
+.chips button{border:1px solid var(--line);color:var(--muted);background:transparent;border-radius:9px;min-height:46px;padding:5px 11px;font-size:.86rem}
+.chips button[aria-pressed=true]{border-color:var(--accent);background:#2a443b;color:var(--ink)}
+.nudge{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.nudge button.control{padding:4px;min-height:48px}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.actions button.control{flex:auto;font-size:.92rem;min-height:48px}
+.reset{display:inline-block;color:var(--muted);background:transparent;border:0;text-decoration:underline;text-underline-offset:4px;min-height:43px;padding:4px 0;font-size:.88rem}
+.callout{display:inline-flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted);line-height:1.25}
+.callout:before{content:"";height:8px;width:8px;flex:none;border-radius:50%;background:var(--accent)}
+#feedback{min-height:1.1em}
+@media(min-width:1100px){.map{min-height:405px}.panel{padding:26px}.group+.group{margin-top:22px;padding-top:21px}.group button.control{min-height:64px}.map-footer{font-size:1rem}.panel p{font-size:1.03rem}.shell{padding-top:34px}.title-row{margin-bottom:25px}.panel h2{font-size:1.62rem}}
+@media(min-width:1450px){.map{min-height:500px}}
+@media(max-height:650px) and (min-width:760px){.shell{padding:14px 3vw 9px}header{margin-bottom:12px}.title-row{margin-bottom:13px}h1{font-size:2.35rem}.panel{padding:17px 18px}.layout{gap:13px}.map{min-height:286px}.map-footer{min-height:46px}.group+.group{margin-top:13px;padding-top:12px}.subtitle{margin-top:4px}.panel p{margin:5px 0 9px}}
+@media(max-width:759px){.shell{padding:19px 16px}.layout{grid-template-columns:1fr;gap:12px}header{margin-bottom:20px}.title-row{align-items:flex-start;margin-bottom:13px}h1{font-size:1.95rem}.subtitle{margin-top:5px;font-size:.86rem}.title-row button.control{font-size:.85rem;min-height:46px;padding:7px 11px}.map{min-height:260px}.map-footer{min-height:48px}.panel{padding:17px}.floor{inset:8% 2%;width:96%;height:84%}.light{width:55px;height:55px}.light .lamp-disc{width:35px;height:35px}.light .light-name{top:calc(50% + 20px);font-size:.73rem}.group button.control{min-height:54px}.light::before{width:100px;height:100px}}
+@media(max-width:380px){.title-row{flex-wrap:wrap}.map{min-height:231px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important}.map.running .light::before{opacity:calc(var(--strength)*.75)}}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="edit" viewBox="0 0 24 24"><path d="m14 5 5 5M4 20l5-1L21 7a2 2 0 0 0-4-4L5 15z"/></symbol>
+<symbol id="lamp" viewBox="0 0 24 24"><path d="M8 15c0-3-3-3.8-3-7a7 7 0 0 1 14 0c0 3.2-3 4-3 7zM9 18h6m-5 3h4"/></symbol>
+<symbol id="strip" viewBox="0 0 24 24"><path d="M2 17h10a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h12M4 20h.1M19 8h.1"/></symbol>
+<symbol id="beat" viewBox="0 0 24 24"><path d="M2 12h4l3-8 4 16 3-10 2 2h4"/></symbol>
+<symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/></symbol>
+<symbol id="play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></symbol>
+<symbol id="stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+<symbol id="touch" viewBox="0 0 24 24"><path d="M9 13V6a2 2 0 0 1 4 0v5l1-1a2 2 0 0 1 2 1c2-1 3 0 3 1 2 0 3 1 2 4l-1 4H10l-5-6a2 2 0 0 1 3-2z"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="m11 5-7 7 7 7M4 12h17"/></symbol>
+<symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+</defs></svg>
+<main class="shell">
+<header><div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>RoomGroove</div><time id="clock" aria-label="Ora locale"></time></header>
+<div class="title-row"><div><h1>La mia stanza</h1><p class="subtitle">Tre luci virtuali · Nessun comando alle lampade</p></div><button id="editRoom" class="control secondary"><svg class="icon" aria-hidden="true"><use href="#edit"/></svg>Modifica stanza</button></div>
+<div class="layout">
+<section class="map-frame" aria-label="Mappa della stanza">
+<div class="map" id="map">
+<svg class="floor" viewBox="0 0 660 355" preserveAspectRatio="none" aria-hidden="true">
+<defs>
+<pattern id="boards" width="110" height="36" patternUnits="userSpaceOnUse"><rect width="110" height="36" fill="#34413d"/><path d="M0 1h110M0 19h110M36 1v18m51 0v17" fill="none" stroke="#455048" stroke-width="1"/></pattern>
+<pattern id="rug" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#485b56"/><path d="m0 10 10-10m-2 12 4-4m-14-6 4-4" stroke="#566660" stroke-width="1"/></pattern>
+</defs>
+<rect x="20" y="21" width="622" height="321" rx="6" fill="#0e1819"/>
+<rect x="16" y="13" width="625" height="318" rx="4" fill="url(#boards)" stroke="#657268" stroke-width="7"/>
+<!-- Windows set into the north and east walls. -->
+<path d="M77 13h119m249 0h117M641 85v80" fill="none" stroke="#263c40" stroke-width="10"/>
+<path d="M77 10h119M77 16h119m249-6h117m-117 6h117m76 69v80m6-80v80" fill="none" stroke="#8da9a0" stroke-width="2"/>
+<!-- Seating area. -->
+<rect x="193" y="116" width="269" height="148" rx="9" fill="url(#rug)" stroke="#829187" stroke-width="2"/>
+<rect x="201" y="124" width="253" height="132" rx="6" fill="none" stroke="#71837b" stroke-width="2"/>
+<g fill="#82958a" stroke="#354a43" stroke-width="3">
+<rect x="218" y="36" width="224" height="67" rx="11"/><rect x="224" y="38" width="212" height="18" rx="7"/>
+<rect x="231" y="56" width="63" height="43" rx="6"/><rect x="296" y="56" width="64" height="43" rx="6"/><rect x="362" y="56" width="66" height="43" rx="6"/>
+<rect x="217" y="50" width="14" height="50" rx="5"/><rect x="429" y="50" width="14" height="50" rx="5"/></g>
+<g transform="rotate(-13 308 183)"><rect x="262" y="155" width="92" height="56" rx="22" fill="#354841"/><rect x="260" y="151" width="92" height="56" rx="22" fill="#9a8972" stroke="#b9a388" stroke-width="2"/><rect x="279" y="165" width="18" height="23" rx="2" fill="#627d78"/><circle cx="323" cy="178" r="7" fill="#d0c5a1"/></g>
+<g transform="rotate(-15 511 211)" stroke="#47584e" stroke-width="3"><rect x="485" y="180" width="54" height="59" rx="12" fill="#ac986f"/><rect x="493" y="188" width="38" height="39" rx="8" fill="#bdab83"/><rect x="484" y="224" width="56" height="13" rx="5" fill="#a59068"/></g>
+<!-- Media console, shelving, plant and door swing. -->
+<g stroke="#35473e" stroke-width="2"><rect x="244" y="288" width="181" height="29" rx="4" fill="#8a7e64"/><path d="M301 288v29m65-29v29"/><rect x="278" y="288" width="114" height="7" rx="2" fill="#162326"/></g>
+<rect x="31" y="57" width="24" height="99" rx="2" fill="#857b64"/><g stroke="#465747" stroke-width="3"><path d="M34 63h17m-17 8h17m-15 3 12 10m-14 11h17m-17 5h17m-17 9h17m-15 5 12 8m-13 5h16m-16 12h16"/></g>
+<g fill="#5e7864" stroke="#3e5648" stroke-width="2"><circle cx="586" cy="61" r="15" fill="#9f9279"/><ellipse cx="575" cy="61" rx="19" ry="7" transform="rotate(24 575 61)"/><ellipse cx="591" cy="53" rx="19" ry="7" transform="rotate(-62 591 53)"/><ellipse cx="595" cy="66" rx="18" ry="7" transform="rotate(32 595 66)"/><ellipse cx="579" cy="72" rx="16" ry="6" transform="rotate(-60 579 72)"/></g>
+<path d="M75 331h70" stroke="#253331" stroke-width="9"/><path d="M77 330v-64a64 64 0 0 1 64 64" fill="none" stroke="#9aab99" stroke-width="1.6"/><path d="M77 330v-64" stroke="#a9aa96" stroke-width="4"/>
+</svg>
+<div id="spots" class="spot-layer"></div>
+</div>
+<div class="live-bar" id="liveBar" hidden><span id="liveInfo">Microfono in attesa</span><button class="control secondary" id="globalStop">Ferma microfono</button></div>
+<div class="map-footer"><svg class="icon" aria-hidden="true"><use href="#touch"/></svg><span id="mapHint">Tocca una luce per regolarne l’anteprima.</span></div>
+</section>
+<section class="panel" aria-label="Controlli della stanza">
+<div id="homePane">
+<div class="group"><div class="controls-title"><h2>Microfono</h2><svg class="icon" aria-hidden="true"><use href="#mic"/></svg></div><p>Le luci sulla mappa seguono la musica captata qui.</p><button id="microphone" class="control primary" aria-pressed="false">Attiva microfono</button><div id="meter" class="meter" role="meter" aria-label="Livello del microfono" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div id="micMessage" class="mic-message" role="status"></div></div>
+<div class="group"><div class="controls-title"><h2>Ritmo simulato</h2><svg class="icon" aria-hidden="true"><use href="#beat"/></svg></div><p>Prova le luci anche in una stanza silenziosa.</p><button id="simulate" class="control secondary" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#play"/></svg><span>Avvia anteprima</span></button></div>
+</div>
+<div id="detailPane" hidden><div class="pane-title"><span class="swatch" id="detailColor"></span><h2 id="lightTitle" tabindex="-1"></h2></div><p>Regola l’intensità del suo alone sulla mappa.</p><label class="range-label" for="intensity">Intensità <output id="levelOutput" for="intensity"></output></label><input id="intensity" type="range" min="0" max="100" step="5"><label class="range-label" for="response">Risposta al microfono</label><select id="response"><option value="beat">Accenti del ritmo</option><option value="signal">Livello del suono</option><option value="kick">Accenti bassi</option><option value="snare">Accenti medi</option><option value="hat">Accenti alti</option></select><div class="detail-action"><button id="goHome" class="control secondary"><svg class="icon" aria-hidden="true"><use href="#back"/></svg>Torna ai controlli</button></div><span class="callout">Solo anteprima</span></div>
+<div id="editPane" hidden><h2 id="editTitle" tabindex="-1">Posizione delle luci</h2><p>Seleziona una luce e tocca un punto, trascinala oppure usa le frecce.</p><div id="chooseLight" class="chips" role="group" aria-label="Luce da spostare"></div><div id="nudge" class="nudge" role="group" aria-label="Sposta la luce selezionata"></div><div class="actions"><button class="control primary" id="save">Salva</button><button class="control secondary" id="cancel">Annulla</button></div><button class="reset" id="restore">Ripristina disposizione iniziale</button></div>
+</section>
+</div>
+<div id="feedback" class="feedback" role="status"></div>
+</main>
+<script src="./room-audio.js"></script>
+<script>
+'use strict';
+const byId = id => document.getElementById(id);
+const icon = (name, degrees = 0) => '<svg aria-hidden="true" class="icon" style="transform:rotate(' + degrees + 'deg)"><use href="#' + name + '"/></svg>';
+const palette = ['#ffdab0','#b0e5ed','#69ddec'];
+const defaults = [
+  {name:'WiZ 1', x:.22, y:.35, icon:'lamp', source:'beat'},
+  {name:'WiZ 2', x:.78, y:.33, icon:'lamp', source:'beat'},
+  {name:'Hue Lightstrip', x:.65, y:.76, icon:'strip', source:'beat'}
+];
+const storageKey = 'roomgroove.prototype.room.v1';
+const bounds = {left:.12, right:.86, top:.13, bottom:.81};
+const clamp = (value, min, max) => Math.max(min,Math.min(max,value));
+const copy = points => points.map(p => ({x:p.x,y:p.y}));
+function readRoom(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if(Array.isArray(saved) && saved.length === defaults.length && saved.every(p => p && Number.isFinite(p.x) && Number.isFinite(p.y))){
+      return saved.map(p => ({x:clamp(p.x,bounds.left,bounds.right), y:clamp(p.y,bounds.top,bounds.bottom)}));
+    }
+  }catch(error){ /* A restricted browser can still use the in-memory room. */ }
+  return copy(defaults);
+}
+let room = readRoom();
+let positions = copy(room);
+let selected = null;
+let editing = false;
+let running = false;
+let drag = null;
+let ignorePointerClick = false;
+const intensity = [70,75,85];
+const responses = defaults.map(lamp => lamp.source);
+const lights = [];
+const choices = [];
+const map = byId('map');
+const hint = byId('mapHint');
+const feedback = text => {byId('feedback').textContent = text;};
+const directionKeys = {ArrowLeft:[-.025,0],ArrowUp:[0,-.025],ArrowDown:[0,.025],ArrowRight:[.025,0]};
+function syncMap(){
+  lights.forEach((button,i) => {
+    button.style.left = (positions[i].x*100) + '%';
+    button.style.top = (positions[i].y*100) + '%';
+    button.style.setProperty('--strength',intensity[i]/100);
+    button.classList.toggle('active',selected === i);
+    button.setAttribute('aria-pressed',String(selected === i));
+    choices[i].setAttribute('aria-pressed',String(selected === i));
+  });
+}
+function displayPane(name){
+  ['home','detail','edit'].forEach(pane => {byId(pane+'Pane').hidden = pane !== name;});
+  byId('editRoom').hidden = editing;
+  map.classList.toggle('editing',editing);
+  hint.textContent = editing ? 'Scegli sulla mappa la posizione della luce selezionata.' : 'Tocca una luce per regolarne l’anteprima.';
+}
+function selectLight(index, focusTitle = false){
+  selected = index;
+  syncMap();
+  if(editing) return;
+  displayPane('detail');
+  byId('lightTitle').textContent = defaults[index].name;
+  byId('detailColor').style.background = palette[index];
+  byId('response').value = responses[index];
+  byId('intensity').value = intensity[index];
+  byId('levelOutput').textContent = intensity[index] + '%';
+  if(focusTitle) byId('lightTitle').focus({preventScroll:true});
+  if(window.matchMedia('(max-width:759px)').matches) byId('detailPane').scrollIntoView({block:'nearest'});
+}
+function setPoint(index,x,y){
+  positions[index] = {x:clamp(x,bounds.left,bounds.right),y:clamp(y,bounds.top,bounds.bottom)};
+  syncMap();
+}
+function moveFromEvent(event, dx = 0, dy = 0){
+  const rect = map.getBoundingClientRect();
+  setPoint(selected,(event.clientX - rect.left)/rect.width + dx,(event.clientY - rect.top)/rect.height + dy);
+}
+function nudge(delta){
+  if(!editing || selected === null) return;
+  const point = positions[selected];
+  setPoint(selected,point.x + delta[0],point.y + delta[1]);
+  feedback(defaults[selected].name + ' · posizione ' + Math.round(positions[selected].x*100) + '%, ' + Math.round(positions[selected].y*100) + '%.');
+}
+defaults.forEach((lamp,i) => {
+  const button = document.createElement('button');
+  button.type = 'button';button.className = 'light';button.style.setProperty('--lamp',palette[i]);
+  button.innerHTML = '<span class="lamp-disc">' + icon(lamp.icon) + '</span><span class="light-name"></span>';
+  button.querySelector('.light-name').textContent = lamp.name;
+  button.addEventListener('click', event => {
+    if(ignorePointerClick && event.detail){ignorePointerClick = false;return;}
+    selectLight(i,event.detail === 0);
+  });
+  button.addEventListener('pointerdown', event => {
+    if(!editing || event.button !== 0 || drag) return;
+    selectLight(i);
+    const rect = map.getBoundingClientRect();
+    drag = {id:event.pointerId,index:i,x:event.clientX,y:event.clientY,dx:positions[i].x-(event.clientX-rect.left)/rect.width,dy:positions[i].y-(event.clientY-rect.top)/rect.height,moved:false};
+    button.setPointerCapture(event.pointerId);
+  });
+  button.addEventListener('pointermove', event => {
+    if(!drag || drag.id!==event.pointerId || drag.index!==i || !editing) return;
+    if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)>3) drag.moved = true;
+    if(drag.moved) moveFromEvent(event,drag.dx,drag.dy);
+  });
+  const endDrag = event => {
+    if(!drag || drag.id!==event.pointerId) return;
+    if(drag.moved){
+      ignorePointerClick = true;
+      setTimeout(() => {ignorePointerClick = false;},0);
+    }
+    drag = null;
+  };
+  button.addEventListener('pointerup',endDrag);button.addEventListener('pointercancel',endDrag);
+  button.addEventListener('lostpointercapture',endDrag);
+  button.addEventListener('keydown',event => {
+    if(editing && directionKeys[event.key]){event.preventDefault();selectLight(i);nudge(directionKeys[event.key]);}
+  });
+  lights.push(button);byId('spots').appendChild(button);
+  const choice = document.createElement('button');
+  choice.textContent = lamp.name;choice.addEventListener('click',() => selectLight(i));
+  choices.push(choice);byId('chooseLight').appendChild(choice);
+});
+[['Sinistra','ArrowLeft',180],['Su','ArrowUp',-90],['Giù','ArrowDown',90],['Destra','ArrowRight',0]].forEach(([name,key,degrees]) => {
+  const button = document.createElement('button');
+  button.className = 'control secondary';button.setAttribute('aria-label','Sposta '+name.toLowerCase());button.title = name;
+  button.innerHTML = icon('arrow',degrees);button.addEventListener('click',() => nudge(directionKeys[key]));
+  byId('nudge').appendChild(button);
+});
+map.addEventListener('click',event => {if(editing && selected !== null && !event.target.closest('button')) moveFromEvent(event);});
+byId('response').addEventListener('change',event => {
+  if(selected !== null) responses[selected] = event.target.value;
+});
+byId('intensity').addEventListener('input',event => {
+  if(selected === null) return;
+  intensity[selected] = Number(event.target.value);
+  byId('levelOutput').textContent = intensity[selected] + '%';syncMap();
+});
+byId('goHome').addEventListener('click',() => {
+  const lastSelected = selected;
+  selected = null;syncMap();displayPane('home');
+  if(lastSelected !== null){
+    lights[lastSelected].focus({preventScroll:true});
+    if(window.matchMedia('(max-width:759px)').matches) lights[lastSelected].scrollIntoView({block:'center'});
+  }
+});
+byId('editRoom').addEventListener('click',() => {
+  setSimulation(false);
+  editing = true;positions = copy(room);selected = selected ?? 0;
+  feedback('');displayPane('edit');syncMap();byId('editTitle').focus({preventScroll:true});
+});
+function finishEdit(){
+  drag = null;editing = false;selected = null;positions = copy(room);
+  displayPane('home');syncMap();byId('editRoom').focus({preventScroll:true});
+}
+byId('save').addEventListener('click',() => {
+  room = copy(positions);
+  try{localStorage.setItem(storageKey,JSON.stringify(room));feedback('Disposizione salvata su questo dispositivo.');}
+  catch(error){feedback('Disposizione applicata per questa sessione. Il browser blocca il salvataggio locale.');}
+  finishEdit();
+});
+byId('restore').addEventListener('click',() => {
+  positions = copy(defaults);syncMap();feedback('Disposizione iniziale ripristinata. Premi Salva per conservarla.');
+});
+byId('cancel').addEventListener('click',() => {finishEdit();feedback('Modifiche annullate.');});
+byId('simulate').addEventListener('click',() => {stopMicrophone();setSimulation(!running);feedback('');});
+function setSimulation(next){
+  running = next;map.classList.toggle('running',running);
+  const button = byId('simulate');
+  button.innerHTML = icon(running?'stop':'play')+'<span>'+(running?'Ferma anteprima':'Avvia anteprima')+'</span>';
+  button.setAttribute('aria-pressed',String(running));
+}
+// The meter reads samples in memory. No recorder or network request is used.
+const meter = byId('meter');
+const segments = Array.from({length:16},() => meter.appendChild(document.createElement('i')));
+const micButton = byId('microphone');
+let micState = 'off';
+let activeMic = null;
+let requestNumber = 0;
+let frame = 0;
+function showLevel(count){
+  segments.forEach((segment,i) => segment.classList.toggle('on',i<count));
+  meter.setAttribute('aria-valuenow',String(Math.round(count*100/segments.length)));
+}
+function micUI(state,message = ''){
+  micState = state;
+  byId('liveBar').hidden = state === 'off';
+  byId('globalStop').textContent = state === 'requesting' ? 'Annulla' : 'Ferma microfono';
+  byId('liveInfo').textContent = state === 'requesting' ? 'In attesa del permesso' : 'Microfono attivo';
+  map.classList.toggle('listening',state === 'listening');
+  micButton.textContent = state === 'listening' ? 'Ferma microfono' : state === 'requesting' ? 'Annulla richiesta' : 'Attiva microfono';
+  micButton.setAttribute('aria-pressed',String(state === 'listening'));
+  byId('micMessage').textContent = message;
+}
+function releaseMic(session){
+  if(!session) return;
+  if(session.stream) session.stream.getTracks().forEach(track => track.stop());
+  if(session.source) session.source.disconnect();
+  if(session.ctx && session.ctx.state !== 'closed') session.ctx.close().catch(() => {});
+}
+function stopMicrophone(message = ''){
+  ++requestNumber;cancelAnimationFrame(frame);frame = 0;
+  const session = activeMic;activeMic = null;
+  releaseMic(session);showLevel(0);micUI('off',message);
+}
+async function startMicrophone(){
+  const local = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
+  if(!(location.protocol === 'https:' || (local && location.protocol === 'http:'))){
+    micUI('off','Apri la pagina in HTTPS per provare il microfono.');return;
+  }
+  const AudioEngine = window.AudioContext || window.webkitAudioContext;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !AudioEngine){
+    micUI('off','Questo browser non offre accesso al microfono per le pagine web.');return;
+  }
+  if(typeof window.RoomgrooveRhythm !== 'function'){
+    micUI('off','Il motore audio non è stato caricato. Ricarica la pagina.');return;
+  }
+  setSimulation(false);
+  const current = ++requestNumber;
+  const session = {ctx:null,source:null,stream:null};
+  activeMic = session;micUI('requesting','Consenti il microfono nel browser per vedere il livello.');
+  try{
+    session.ctx = new AudioEngine();
+    const resume = session.ctx.resume();
+    resume.catch(() => {});
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+    if(current !== requestNumber){stream.getTracks().forEach(track => track.stop());return;}
+    session.stream = stream;await resume;
+    if(current !== requestNumber) return;
+    session.source = session.ctx.createMediaStreamSource(stream);
+    const analyser = session.ctx.createAnalyser();
+    analyser.fftSize = 2048;analyser.smoothingTimeConstant = .25;session.source.connect(analyser);
+    const tracker = new window.RoomgrooveRhythm({sampleRate:session.ctx.sampleRate,fftSize:analyser.fftSize});
+    stream.getAudioTracks().forEach(track => track.addEventListener('ended',() => {
+      if(current === requestNumber) stopMicrophone('Ingresso audio interrotto. Puoi riprovare.');
+    },{once:true}));
+    const bins = new Uint8Array(analyser.frequencyBinCount);
+    micUI('listening','Il livello e gli accenti sono calcolati qui.');
+    function measure(){
+      if(current !== requestNumber) return;
+      analyser.getByteFrequencyData(bins);
+      const rhythm = tracker.update(bins,performance.now());
+      showLevel(Math.round(rhythm.level*segments.length));
+      lights.forEach((light,index) => {
+        const response = responses[index];
+        const signal = response === 'beat' ? Math.max(rhythm.kick,rhythm.snare) : response === 'signal' ? rhythm.level : rhythm[response];
+        light.style.setProperty('--pulse',clamp(signal,0,1).toFixed(3));
+      });
+      const text = rhythm.bpm === null ? 'In ascolto del ritmo' : rhythm.bpm + ' BPM stimati';
+      if(byId('liveInfo').textContent !== text) byId('liveInfo').textContent = text;
+      frame = requestAnimationFrame(measure);
+    }
+    measure();
+  }catch(error){
+    if(current !== requestNumber) return;
+    const messages = {NotAllowedError:'Permesso negato. Consenti il microfono nelle impostazioni del sito e riprova.',NotFoundError:'Nessun microfono disponibile su questo dispositivo.',NotReadableError:'Microfono occupato o inaccessibile. Libera l’ingresso e riprova.'};
+    stopMicrophone(messages[error.name] || 'Il browser non ha avviato il microfono. Controlla i permessi del sito e riprova.');
+  }
+}
+byId('globalStop').addEventListener('click',() => stopMicrophone('Microfono spento.'));
+micButton.addEventListener('click',() => {if(micState === 'off') startMicrophone();else stopMicrophone('Microfono spento.');});
+window.addEventListener('pagehide',() => stopMicrophone());
+document.addEventListener('visibilitychange',() => {if(document.hidden && micState !== 'off') stopMicrophone('Microfono spento quando la pagina è passata in secondo piano.');});
+function clock(){
+  const now = new Date();
+  byId('clock').dateTime = now.toISOString();
+  byId('clock').textContent = now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+syncMap();clock();setInterval(clock,15000);
+if((location.protocol === 'http:' || location.protocol === 'https:') && 'serviceWorker' in navigator){
+  window.addEventListener('load',() => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Online use remains available when browser policy disables offline storage.
+    });
+  });
+}
+</script>
+</body>
+</html>
