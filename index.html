@@ -68,6 +68,7 @@ button.control.secondary{background:transparent}
 .meter i{flex:1;border-radius:2px;background:#4a5859}
 .meter i.on{background:var(--accent)}
 .mic-message:not(:empty),.feedback:not(:empty){margin-top:10px;font-size:.84rem;color:#f4dfa5}
+.overlap-choices{display:grid;gap:7px;margin:12px 0}.overlap-choices button.control{justify-content:flex-start;min-height:52px}.overlap-choices .swatch{width:10px;height:10px}
 .pane-title{display:flex;gap:10px;align-items:center}
 .swatch{flex:none;width:13px;height:13px;background:var(--accent);border-radius:50%}
 .detail-action{margin:14px 0}
@@ -85,11 +86,21 @@ input[type=range]{width:100%;height:50px;accent-color:var(--accent);margin:0}
 .callout{display:inline-flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted);line-height:1.25}
 .callout:before{content:"";height:8px;width:8px;flex:none;border-radius:50%;background:var(--accent)}
 #feedback{min-height:1.1em}
+/* Keep the room map steady when switching to a shorter control pane. */
+@media(min-width:760px){
+  .panel{display:grid;grid-template-areas:"pane";align-content:start}
+  .panel>div{grid-area:pane}
+  #homePane[hidden]{display:block!important;visibility:hidden}
+}
 @media(min-width:1100px){.map{min-height:405px}.panel{padding:26px}.group+.group{margin-top:22px;padding-top:21px}.group button.control{min-height:64px}.map-footer{font-size:1rem}.panel p{font-size:1.03rem}.shell{padding-top:34px}.title-row{margin-bottom:25px}.panel h2{font-size:1.62rem}}
 @media(min-width:1450px){.map{min-height:500px}}
 @media(max-height:650px) and (min-width:760px){.shell{padding:14px 3vw 9px}header{margin-bottom:12px}.title-row{margin-bottom:13px}h1{font-size:2.35rem}.panel{padding:17px 18px}.layout{gap:13px}.map{min-height:286px}.map-footer{min-height:46px}.group+.group{margin-top:13px;padding-top:12px}.subtitle{margin-top:4px}.panel p{margin:5px 0 9px}}
 @media(max-width:759px){.shell{padding:19px 16px}.layout{grid-template-columns:1fr;gap:12px}header{margin-bottom:20px}.title-row{align-items:flex-start;margin-bottom:13px}h1{font-size:1.95rem}.subtitle{margin-top:5px;font-size:.86rem}.title-row button.control{font-size:.85rem;min-height:46px;padding:7px 11px}.map{min-height:260px}.map-footer{min-height:48px}.panel{padding:17px}.floor{inset:8% 2%;width:96%;height:84%}.light{width:55px;height:55px}.light .lamp-disc{width:35px;height:35px}.light .light-name{top:calc(50% + 20px);font-size:.73rem}.group button.control{min-height:54px}.light::before{width:100px;height:100px}}
 @media(max-width:380px){.title-row{flex-wrap:wrap}.map{min-height:231px}}
+@media(max-width:759px){
+  .light.edge-left .light-name{left:10%;transform:none}
+  .light.edge-right .light-name{left:auto;right:10%;transform:none}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important}.map.running .light::before{opacity:calc(var(--strength)*.75)}}
 </style>
 </head>
@@ -148,7 +159,12 @@ input[type=range]{width:100%;height:50px;accent-color:var(--accent);margin:0}
 <div class="group"><div class="controls-title"><h2>Microfono</h2><svg class="icon" aria-hidden="true"><use href="#mic"/></svg></div><p>Le luci sulla mappa seguono la musica captata qui.</p><button id="microphone" class="control primary" aria-pressed="false">Attiva microfono</button><div id="meter" class="meter" role="meter" aria-label="Livello del microfono" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div id="micMessage" class="mic-message" role="status"></div></div>
 <div class="group"><div class="controls-title"><h2>Ritmo simulato</h2><svg class="icon" aria-hidden="true"><use href="#beat"/></svg></div><p>Prova le luci anche in una stanza silenziosa.</p><button id="simulate" class="control secondary" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#play"/></svg><span>Avvia anteprima</span></button></div>
 </div>
-<div id="detailPane" hidden><div class="pane-title"><span class="swatch" id="detailColor"></span><h2 id="lightTitle" tabindex="-1"></h2></div><p>Regola l’intensità del suo alone sulla mappa.</p><label class="range-label" for="intensity">Intensità <output id="levelOutput" for="intensity"></output></label><input id="intensity" type="range" min="0" max="100" step="5"><label class="range-label" for="response">Risposta al microfono</label><select id="response"><option value="beat">Accenti del ritmo</option><option value="signal">Livello del suono</option><option value="kick">Accenti bassi</option><option value="snare">Accenti medi</option><option value="hat">Accenti alti</option></select><div class="detail-action"><button id="goHome" class="control secondary"><svg class="icon" aria-hidden="true"><use href="#back"/></svg>Torna ai controlli</button></div><span class="callout">Solo anteprima</span></div>
+<div id="overlapPane" hidden>
+<h2>Scegli una luce</h2><p>Più luci occupano questo punto della stanza.</p>
+<div id="overlapChoices" class="overlap-choices" role="group" aria-label="Luci in questo punto"></div>
+<button id="backToMap" class="control secondary"><svg class="icon" aria-hidden="true"><use href="#back"/></svg>Torna alla mappa</button>
+</div>
+<div id="detailPane" hidden><div class="pane-title"><span class="swatch" id="detailColor"></span><h2 id="lightTitle" tabindex="-1"></h2></div><p>Regola l’intensità del suo alone sulla mappa.</p><label class="range-label" for="intensity">Intensità <output id="levelOutput" for="intensity"></output></label><input id="intensity" type="range" min="0" max="100" step="5"><label class="range-label" for="response">Risposta al microfono</label><select id="response"><option value="beat">Accenti del ritmo</option><option value="signal">Livello del suono</option><option value="kick">Accenti bassi</option><option value="snare">Accenti medi</option><option value="hat">Accenti alti</option></select><div class="detail-action"><button id="goHome" class="control secondary"><svg class="icon" aria-hidden="true"><use href="#back"/></svg><span id="detailBackLabel">Torna ai controlli</span></button></div><span class="callout">Solo anteprima</span></div>
 <div id="editPane" hidden><h2 id="editTitle" tabindex="-1">Posizione delle luci</h2><p>Seleziona una luce e tocca un punto, trascinala oppure usa le frecce.</p><div id="chooseLight" class="chips" role="group" aria-label="Luce da spostare"></div><div id="nudge" class="nudge" role="group" aria-label="Sposta la luce selezionata"></div><div class="actions"><button class="control primary" id="save">Salva</button><button class="control secondary" id="cancel">Annulla</button></div><button class="reset" id="restore">Ripristina disposizione iniziale</button></div>
 </section>
 </div>
@@ -181,6 +197,7 @@ function readRoom(){
 let room = readRoom();
 let positions = copy(room);
 let selected = null;
+let overlap = null;
 let editing = false;
 let running = false;
 let drag = null;
@@ -199,12 +216,14 @@ function syncMap(){
     button.style.top = (positions[i].y*100) + '%';
     button.style.setProperty('--strength',intensity[i]/100);
     button.classList.toggle('active',selected === i);
+    button.classList.toggle('edge-left',positions[i].x < .17);
+    button.classList.toggle('edge-right',positions[i].x > .83);
     button.setAttribute('aria-pressed',String(selected === i));
     choices[i].setAttribute('aria-pressed',String(selected === i));
   });
 }
 function displayPane(name){
-  ['home','detail','edit'].forEach(pane => {byId(pane+'Pane').hidden = pane !== name;});
+  ['home','detail','edit','overlap'].forEach(pane => {byId(pane+'Pane').hidden = pane !== name;});
   byId('editRoom').hidden = editing;
   map.classList.toggle('editing',editing);
   hint.textContent = editing ? 'Scegli sulla mappa la posizione della luce selezionata.' : 'Tocca una luce per regolarne l’anteprima.';
@@ -214,6 +233,7 @@ function selectLight(index, focusTitle = false){
   syncMap();
   if(editing) return;
   displayPane('detail');
+  byId('detailBackLabel').textContent = overlap ? 'Torna alla scelta' : 'Torna ai controlli';
   byId('lightTitle').textContent = defaults[index].name;
   byId('detailColor').style.background = palette[index];
   byId('response').value = responses[index];
@@ -221,6 +241,35 @@ function selectLight(index, focusTitle = false){
   byId('levelOutput').textContent = intensity[index] + '%';
   if(focusTitle) byId('lightTitle').focus({preventScroll:true});
   if(window.matchMedia('(max-width:759px)').matches) byId('detailPane').scrollIntoView({block:'nearest'});
+}
+function showOverlap(focusIndex){
+  selected = null;
+  syncMap();
+  displayPane('overlap');
+  const group = byId('overlapChoices');
+  group.textContent = '';
+  for(const index of overlap.indices){
+    const button = document.createElement('button');
+    button.className = 'control';
+    const swatch = document.createElement('span');
+    swatch.className = 'swatch';
+    swatch.style.background = palette[index];
+    button.append(swatch,document.createTextNode(defaults[index].name));
+    button.addEventListener('click',() => selectLight(index,true));
+    group.appendChild(button);
+    if(index === focusIndex) button.focus({preventScroll:true});
+  }
+  if(window.matchMedia('(max-width:759px)').matches) byId('overlapPane').scrollIntoView({block:'nearest'});
+}
+function hitLights(x,y){
+  return lights.reduce((found,light,index) => {
+    const hit = [light,light.querySelector('.light-name')].some(element => {
+      const box = element.getBoundingClientRect();
+      return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+    });
+    if(hit) found.push(index);
+    return found;
+  },[]);
 }
 function setPoint(index,x,y){
   positions[index] = {x:clamp(x,bounds.left,bounds.right),y:clamp(y,bounds.top,bounds.bottom)};
@@ -243,6 +292,15 @@ defaults.forEach((lamp,i) => {
   button.querySelector('.light-name').textContent = lamp.name;
   button.addEventListener('click', event => {
     if(ignorePointerClick && event.detail){ignorePointerClick = false;return;}
+    overlap = null;
+    if(!editing && event.detail){
+      const indices = hitLights(event.clientX,event.clientY);
+      if(indices.length > 1){
+        overlap = {indices,origin:i};
+        showOverlap(indices[0]);
+        return;
+      }
+    }
     selectLight(i,event.detail === 0);
   });
   button.addEventListener('pointerdown', event => {
@@ -290,15 +348,24 @@ byId('intensity').addEventListener('input',event => {
   intensity[selected] = Number(event.target.value);
   byId('levelOutput').textContent = intensity[selected] + '%';syncMap();
 });
-byId('goHome').addEventListener('click',() => {
-  const lastSelected = selected;
+function backToMap(lastSelected){
+  overlap = null;
   selected = null;syncMap();displayPane('home');
   if(lastSelected !== null){
     lights[lastSelected].focus({preventScroll:true});
     if(window.matchMedia('(max-width:759px)').matches) lights[lastSelected].scrollIntoView({block:'center'});
   }
+}
+byId('backToMap').addEventListener('click',() => backToMap(overlap.origin));
+byId('goHome').addEventListener('click',() => {
+  if(overlap){
+    showOverlap(selected);
+    return;
+  }
+  backToMap(selected);
 });
 byId('editRoom').addEventListener('click',() => {
+  overlap = null;
   setSimulation(false);
   editing = true;positions = copy(room);selected = selected ?? 0;
   feedback('');displayPane('edit');syncMap();byId('editTitle').focus({preventScroll:true});
@@ -340,9 +407,10 @@ function micUI(state,message = ''){
   micState = state;
   byId('liveBar').hidden = state === 'off';
   byId('globalStop').textContent = state === 'requesting' ? 'Annulla' : 'Ferma microfono';
-  byId('liveInfo').textContent = state === 'requesting' ? 'In attesa del permesso' : 'Microfono attivo';
+  byId('liveInfo').textContent = state === 'requesting' ? 'In attesa del permesso' : state === 'suspended' ? 'Microfono concesso · analisi in pausa' : 'Microfono attivo';
   map.classList.toggle('listening',state === 'listening');
-  micButton.textContent = state === 'listening' ? 'Ferma microfono' : state === 'requesting' ? 'Annulla richiesta' : 'Attiva microfono';
+  const labels = {off:'Attiva microfono',requesting:'Annulla richiesta',suspended:'Avvia analisi',listening:'Ferma microfono'};
+  micButton.textContent = labels[state];
   micButton.setAttribute('aria-pressed',String(state === 'listening'));
   byId('micMessage').textContent = message;
 }
@@ -350,12 +418,43 @@ function releaseMic(session){
   if(!session) return;
   if(session.stream) session.stream.getTracks().forEach(track => track.stop());
   if(session.source) session.source.disconnect();
-  if(session.ctx && session.ctx.state !== 'closed') session.ctx.close().catch(() => {});
+  if(session.ctx && session.ctx.state !== 'closed'){
+    session.ctx.onstatechange = null;
+    Promise.resolve(session.ctx.close()).catch(() => {});
+  }
 }
 function stopMicrophone(message = ''){
   ++requestNumber;cancelAnimationFrame(frame);frame = 0;
   const session = activeMic;activeMic = null;
   releaseMic(session);showLevel(0);micUI('off',message);
+}
+function microphoneError(error, stage){
+  const code = typeof error === 'string' ? error : error && (error.name || error.message) || 'Errore sconosciuto';
+  const reasons = {
+    NotAllowedError:'Il browser ha negato l’accesso. Se Silk mostra i permessi di questo sito, controlla la voce Microfono.',
+    PermissionDeniedError:'Silk ha negato l’accesso al microfono del sito.',
+    PermissionDismissedError:'La richiesta di accesso è stata chiusa. Puoi riprovare.',
+    NotFoundError:'Il browser non trova un ingresso audio.',
+    DevicesNotFoundError:'Silk non espone alcun ingresso audio alla pagina.',
+    NotReadableError:'Silk non riesce a leggere il microfono. Chiudi eventuali chiamate e riprova.',
+    TrackStartError:'Silk non è riuscito ad avviare il dispositivo audio.',
+    SecurityError:'La configurazione di sicurezza di questo browser blocca la cattura.',
+    NotSupportedError:'Questa operazione audio non è supportata da Silk.',
+    OverconstrainedError:'Il browser non riesce ad aprire neppure l’ingresso predefinito.',
+    AbortError:'L’apertura dell’ingresso audio è stata interrotta.'
+  };
+  const summary = stage === 'Microfono' ? reasons[code] : null;
+  const detail = error && typeof error.message === 'string' && error.message !== code ? error.message.slice(0,140) : '';
+  return (summary || 'Il browser ha interrotto questa operazione.') + ' (' + stage + ' · ' + code + ')' + (detail ? ' ' + detail : '');
+}
+function requestDefaultMicrophone(){
+  const constraints = {audio:true,video:false};
+  if(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function'){
+    return navigator.mediaDevices.getUserMedia(constraints);
+  }
+  const legacy = navigator.getUserMedia || navigator.webkitGetUserMedia;
+  if(legacy) return new Promise((resolve,reject) => legacy.call(navigator,constraints,resolve,reject));
+  return null;
 }
 async function startMicrophone(){
   const local = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
@@ -363,8 +462,8 @@ async function startMicrophone(){
     micUI('off','Apri la pagina in HTTPS per provare il microfono.');return;
   }
   const AudioEngine = window.AudioContext || window.webkitAudioContext;
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !AudioEngine){
-    micUI('off','Questo browser non offre accesso al microfono per le pagine web.');return;
+  if(!AudioEngine){
+    micUI('off','Silk non offre il motore di analisi audio in questa pagina (Web Audio assente).');return;
   }
   if(typeof window.RoomgrooveRhythm !== 'function'){
     micUI('off','Il motore audio non è stato caricato. Ricarica la pagina.');return;
@@ -373,14 +472,21 @@ async function startMicrophone(){
   const current = ++requestNumber;
   const session = {ctx:null,source:null,stream:null};
   activeMic = session;micUI('requesting','Consenti il microfono nel browser per vedere il livello.');
+  let stage = 'Microfono';
   try{
-    session.ctx = new AudioEngine();
-    const resume = session.ctx.resume();
-    resume.catch(() => {});
-    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+    const request = requestDefaultMicrophone();
+    if(!request){stopMicrophone('Silk non espone il microfono ai siti su questo dispositivo (getUserMedia assente).');return;}
+    const stream = await request;
     if(current !== requestNumber){stream.getTracks().forEach(track => track.stop());return;}
-    session.stream = stream;await resume;
-    if(current !== requestNumber) return;
+    session.stream = stream;
+    if(document.hidden){
+      stopMicrophone('Consenso ricevuto. Riapri RoomGroove e tocca Attiva microfono per ascoltare in primo piano.');return;
+    }
+    if(!stream.getAudioTracks().some(track => track.readyState === 'live')){
+      stopMicrophone('Silk ha risposto senza una traccia audio attiva (Microfono · nessuna traccia).');return;
+    }
+    stage = 'Analisi audio';
+    session.ctx = new AudioEngine();
     session.source = session.ctx.createMediaStreamSource(stream);
     const analyser = session.ctx.createAnalyser();
     analyser.fftSize = 2048;analyser.smoothingTimeConstant = .25;session.source.connect(analyser);
@@ -389,9 +495,8 @@ async function startMicrophone(){
       if(current === requestNumber) stopMicrophone('Ingresso audio interrotto. Puoi riprovare.');
     },{once:true}));
     const bins = new Uint8Array(analyser.frequencyBinCount);
-    micUI('listening','Il livello e gli accenti sono calcolati qui.');
     function measure(){
-      if(current !== requestNumber) return;
+      if(current !== requestNumber || session.ctx.state !== 'running') return;
       analyser.getByteFrequencyData(bins);
       const rhythm = tracker.update(bins,performance.now());
       showLevel(Math.round(rhythm.level*segments.length));
@@ -404,17 +509,45 @@ async function startMicrophone(){
       if(byId('liveInfo').textContent !== text) byId('liveInfo').textContent = text;
       frame = requestAnimationFrame(measure);
     }
-    measure();
+    function followAudioState(){
+      if(current !== requestNumber) return;
+      cancelAnimationFrame(frame);
+      if(session.ctx.state === 'running'){
+        micUI('listening','Il livello e gli accenti sono calcolati qui.');
+        measure();
+      }else{
+        showLevel(0);
+        micUI('suspended','Il microfono è disponibile. Tocca Avvia analisi per attivare l’audio nel browser.');
+      }
+    }
+    session.resume = () => {
+      try{
+        Promise.resolve(session.ctx.resume()).then(followAudioState).catch(error => {
+          if(current === requestNumber) stopMicrophone(microphoneError(error,'Avvio analisi'));
+        });
+      }catch(error){
+        if(current === requestNumber) stopMicrophone(microphoneError(error,'Avvio analisi'));
+      }
+    };
+    session.ctx.onstatechange = followAudioState;
+    followAudioState();
+    if(session.ctx.state !== 'running') session.resume();
   }catch(error){
     if(current !== requestNumber) return;
-    const messages = {NotAllowedError:'Permesso negato. Consenti il microfono nelle impostazioni del sito e riprova.',NotFoundError:'Nessun microfono disponibile su questo dispositivo.',NotReadableError:'Microfono occupato o inaccessibile. Libera l’ingresso e riprova.'};
-    stopMicrophone(messages[error.name] || 'Il browser non ha avviato il microfono. Controlla i permessi del sito e riprova.');
+    stopMicrophone(microphoneError(error,stage));
   }
 }
 byId('globalStop').addEventListener('click',() => stopMicrophone('Microfono spento.'));
-micButton.addEventListener('click',() => {if(micState === 'off') startMicrophone();else stopMicrophone('Microfono spento.');});
+micButton.addEventListener('click',() => {
+  if(micState === 'off') startMicrophone();
+  else if(micState === 'suspended' && activeMic) activeMic.resume();
+  else stopMicrophone('Microfono spento.');
+});
 window.addEventListener('pagehide',() => stopMicrophone());
-document.addEventListener('visibilitychange',() => {if(document.hidden && micState !== 'off') stopMicrophone('Microfono spento quando la pagina è passata in secondo piano.');});
+document.addEventListener('visibilitychange',() => {
+  // A native permission prompt can obscure the page before capture begins.
+  if(document.hidden && activeMic && activeMic.stream) stopMicrophone('Microfono spento quando la pagina è passata in secondo piano.');
+});
 function clock(){
   const now = new Date();
   byId('clock').dateTime = now.toISOString();

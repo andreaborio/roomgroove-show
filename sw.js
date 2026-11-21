@@ -1,7 +1,7 @@
 'use strict';
 
 const prefix = 'roomgroove:' + new URL(self.registration.scope).pathname + ':';
-const cacheName = prefix + 'v1';
+const cacheName = prefix + 'v2';
 const files = ['index.html', 'room-audio.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 const assetPaths = new Set(files.map(file => new URL(file, self.registration.scope).pathname));
 
@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
     const cache = await caches.open(cacheName);
     const key = page ? 'index.html' : url.pathname;
     try {
-      const response = await fetch(event.request);
+      const response = await fetch(event.request, {cache:'no-cache'});
       if (response.ok && (!page || url.pathname === new URL(self.registration.scope).pathname || url.pathname.endsWith('/index.html'))) {
         await cache.put(key, response.clone());
       }
